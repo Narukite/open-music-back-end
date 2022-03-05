@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/InvariantError');
@@ -10,7 +9,7 @@ class AlbumsService {
   }
 
   async addAlbum({ name, year }) {
-    const id = nanoid(16);
+    const id = `album-${nanoid(16)}`;
 
     const query = {
       text: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',

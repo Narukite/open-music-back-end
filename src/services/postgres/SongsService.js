@@ -1,8 +1,7 @@
-/* eslint-disable no-underscore-dangle */
 const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/InvariantError');
-const { mapSongDBToSongModel, mapSongsDBToSongsModel } = require('../../utils');
+const { mapSongDBToSongModel } = require('../../utils');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
 class SongsService {
@@ -13,7 +12,7 @@ class SongsService {
   async addSong({
     title, year, performer, genre, duration, albumId,
   }) {
-    const id = nanoid(16);
+    const id = `song-${nanoid(16)}`;
 
     const query = {
       text: 'INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id',
@@ -30,48 +29,48 @@ class SongsService {
   }
 
   async getSongs() {
-    const result = await this._pool.query('SELECT * FROM songs');
-    return result.rows.map(mapSongsDBToSongsModel);
+    const result = await this._pool.query('SELECT id, title, performer FROM songs');
+    return result.rows;
   }
 
   async getSongsByAlbumId(albumId) {
     const query = {
-      text: 'SELECT * FROM songs WHERE album_id = $1',
+      text: 'SELECT id, title, performer FROM songs WHERE album_id = $1',
       values: [albumId],
     };
     const result = await this._pool.query(query);
-    return result.rows.map(mapSongsDBToSongsModel);
+    return result.rows;
   }
 
   async getSongsByTitleQuery(title) {
     const titleQuery = `%${title.toUpperCase()}%`;
     const query = {
-      text: 'SELECT * FROM songs WHERE UPPER(title) LIKE $1',
+      text: 'SELECT id, title, performer FROM songs WHERE UPPER(title) LIKE $1',
       values: [titleQuery],
     };
     const result = await this._pool.query(query);
-    return result.rows.map(mapSongsDBToSongsModel);
+    return result.rows;
   }
 
   async getSongsByPerformerQuery(performer) {
     const performerQuery = `%${performer.toUpperCase()}%`;
     const query = {
-      text: 'SELECT * FROM songs WHERE UPPER(performer) LIKE $1',
+      text: 'SELECT id, title, performer FROM songs WHERE UPPER(performer) LIKE $1',
       values: [performerQuery],
     };
     const result = await this._pool.query(query);
-    return result.rows.map(mapSongsDBToSongsModel);
+    return result.rows;
   }
 
   async getSongsByTitleAndPerformerQuery(title, performer) {
     const titleQuery = `%${title.toUpperCase()}%`;
     const performerQuery = `%${performer.toUpperCase()}%`;
     const query = {
-      text: 'SELECT * FROM songs WHERE UPPER(title) LIKE $1 AND UPPER(performer) LIKE $2',
+      text: 'SELECT id, title, performer FROM songs WHERE UPPER(title) LIKE $1 AND UPPER(performer) LIKE $2',
       values: [titleQuery, performerQuery],
     };
     const result = await this._pool.query(query);
-    return result.rows.map(mapSongsDBToSongsModel);
+    return result.rows;
   }
 
   async getSongById(id) {

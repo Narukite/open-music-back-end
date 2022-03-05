@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 const ClientError = require('../../exceptions/ClientError');
 
 class SongsHandler {
@@ -13,11 +12,11 @@ class SongsHandler {
     this.deleteSongByIdHandler = this.deleteSongByIdHandler.bind(this);
   }
 
-  async postSongHandler(request, h) {
+  async postSongHandler({ payload }, h) {
     try {
-      this._validator.validateSongPayload(request.payload);
+      this._validator.validateSongPayload(payload);
 
-      const songId = await this._service.addSong(request.payload);
+      const songId = await this._service.addSong(payload);
 
       const response = h.response({
         status: 'success',
@@ -49,8 +48,8 @@ class SongsHandler {
     }
   }
 
-  async getSongsHandler(request) {
-    const { title, performer } = request.query;
+  async getSongsHandler({ query }) {
+    const { title, performer } = query;
     let songs;
     if (title && performer) {
       songs = await this._service.getSongsByTitleAndPerformerQuery(title, performer);
@@ -69,9 +68,9 @@ class SongsHandler {
     };
   }
 
-  async getSongByIdHandler(request, h) {
+  async getSongByIdHandler({ params }, h) {
     try {
-      const { id } = request.params;
+      const { id } = params;
 
       const song = await this._service.getSongById(id);
 
@@ -102,12 +101,12 @@ class SongsHandler {
     }
   }
 
-  async putSongByIdHandler(request, h) {
+  async putSongByIdHandler({ payload, params }, h) {
     try {
-      this._validator.validateSongPayload(request.payload);
-      const { id } = request.params;
+      this._validator.validateSongPayload(payload);
+      const { id } = params;
 
-      await this._service.editSongById(id, request.payload);
+      await this._service.editSongById(id, payload);
 
       return {
         status: 'success',
@@ -134,9 +133,9 @@ class SongsHandler {
     }
   }
 
-  async deleteSongByIdHandler(request, h) {
+  async deleteSongByIdHandler({ params }, h) {
     try {
-      const { id } = request.params;
+      const { id } = params;
 
       await this._service.deleteSongById(id);
 
