@@ -1,8 +1,9 @@
 class PlaylistSongsHandler {
-  constructor(playlistSongsService, playlistsService, songsService, validator) {
+  constructor(playlistSongsService, playlistsService, songsService, activitiesService, validator) {
     this._playlistSongsService = playlistSongsService;
     this._playlistsService = playlistsService;
     this._songsService = songsService;
+    this._activitiesService = activitiesService;
     this._validator = validator;
 
     this.postPlaylistSongHandler = this.postPlaylistSongHandler.bind(this);
@@ -18,10 +19,12 @@ class PlaylistSongsHandler {
       const { id: credentialId } = request.auth.credentials;
 
       await this._songsService.verifyExistingSong(songId);
-      await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+      await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
       const playlistSongId = await this._playlistSongsService.addPlaylistSong({
         playlistId, songId,
       });
+      const action = 'add';
+      await this._activitiesService.addActivity(playlistId, songId, credentialId, action);
 
       const response = h.response({
         status: 'success',
@@ -41,7 +44,7 @@ class PlaylistSongsHandler {
     const { id: playlistId } = request.params;
     const { id: credentialId } = request.auth.credentials;
 
-    await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+    await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
     const requestedPlaylist = await this._playlistsService.getPlaylistById(playlistId);
     const songsOfRequestedPlaylist = await this._playlistSongsService
       .getPlaylistSongs(playlistId);
@@ -62,8 +65,10 @@ class PlaylistSongsHandler {
       const { id: playlistId } = request.params;
       const { id: credentialId } = request.auth.credentials;
 
-      await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+      await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
       await this._playlistSongsService.deletePlaylistSongById(playlistId, songId);
+      const action = 'delete';
+      await this._activitiesService.addActivity(playlistId, songId, credentialId, action);
 
       return {
         status: 'success',
