@@ -38,7 +38,9 @@ class SongsService {
       text: 'SELECT id, title, performer FROM songs WHERE album_id = $1',
       values: [albumId],
     };
+
     const result = await this._pool.query(query);
+
     return result.rows;
   }
 
@@ -48,7 +50,9 @@ class SongsService {
       text: 'SELECT id, title, performer FROM songs WHERE UPPER(title) LIKE $1',
       values: [titleQuery],
     };
+
     const result = await this._pool.query(query);
+
     return result.rows;
   }
 
@@ -58,7 +62,9 @@ class SongsService {
       text: 'SELECT id, title, performer FROM songs WHERE UPPER(performer) LIKE $1',
       values: [performerQuery],
     };
+
     const result = await this._pool.query(query);
+
     return result.rows;
   }
 
@@ -69,7 +75,9 @@ class SongsService {
       text: 'SELECT id, title, performer FROM songs WHERE UPPER(title) LIKE $1 AND UPPER(performer) LIKE $2',
       values: [titleQuery, performerQuery],
     };
+
     const result = await this._pool.query(query);
+
     return result.rows;
   }
 
@@ -112,6 +120,19 @@ class SongsService {
 
     if (!result.rows.length) {
       throw new NotFoundError('Song gagal dihapus. Id tidak ditemukan');
+    }
+  }
+
+  async verifyExistingSong(id) {
+    const query = {
+      text: 'SELECT id FROM songs WHERE id = $1',
+      values: [id],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (result.rows.length === 0) {
+      throw new NotFoundError('Gagal menemukan song.');
     }
   }
 }

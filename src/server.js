@@ -1,17 +1,44 @@
 require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
+const Jwt = require('@hapi/jwt');
+
 const albums = require('./api/albums');
 const AlbumsService = require('./services/postgres/AlbumsService');
 const AlbumsValidator = require('./validator/albums');
+
 const songs = require('./api/songs');
 const SongsService = require('./services/postgres/SongsService');
 const SongsValidator = require('./validator/songs');
+
+const users = require('./api/users');
+const UsersService = require('./services/postgres/UsersService');
+const UsersValidator = require('./validator/users');
+
+const authentications = require('./api/authentications');
+const AuthenticationsService = require('./services/postgres/AuthenticationsService');
+const TokenManager = require('./tokenize/TokenManager');
+const AuthenticationsValidator = require('./validator/authentications');
+
+const playlists = require('./api/playlists');
+const PlaylistsService = require('./services/postgres/PlaylistsService');
+const PlaylistsValidator = require('./validator/playlists');
+
+const playlistSongs = require('./api/playlistsongs');
+const PlaylistSongsService = require('./services/postgres/PlaylistSongsService');
+const PlaylistSongsValidator = require('./validator/playlistsongs');
+
 const ClientError = require('./exceptions/ClientError');
+const AuthenticationError = require('./exceptions/AuthenticationError');
+const NotFoundError = require('./exceptions/NotFoundError');
 
 const init = async () => {
+  const usersService = new UsersService();
+  const authenticationsService = new AuthenticationsService();
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
+  const playlistsService = new PlaylistsService();
+  const playlistSongsService = new PlaylistSongsService();
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -21,6 +48,28 @@ const init = async () => {
         origin: ['*'],
       },
     },
+  });
+
+  await server.register([
+    {
+      plugin: Jwt,
+    },
+  ]);
+
+  server.auth.strategy('openmusic_jwt', 'jwt', {
+    keys: process.env.ACCESS_TOKEN_KEY,
+    verify: {
+      aud: false,
+      iss: false,
+      sub: false,
+      maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+    },
+    validate: (artifacts) => ({
+      isValid: true,
+      credentials: {
+        id: artifacts.decoded.payload.id,
+      },
+    }),
   });
 
   await server.register([{
@@ -36,6 +85,35 @@ const init = async () => {
       service: songsService,
       validator: SongsValidator,
     },
+  }, {
+    plugin: users,
+    options: {
+      service: usersService,
+      validator: UsersValidator,
+    },
+  },
+  {
+    plugin: authentications,
+    options: {
+      authenticationsService,
+      usersService,
+      tokenManager: TokenManager,
+      validator: AuthenticationsValidator,
+    },
+  }, {
+    plugin: playlists,
+    options: {
+      service: playlistsService,
+      validator: PlaylistsValidator,
+    },
+  }, {
+    plugin: playlistSongs,
+    options: {
+      playlistSongsService,
+      playlistsService,
+      songsService,
+      validator: PlaylistSongsValidator,
+    },
   },
   ]);
 
@@ -50,13 +128,35 @@ const init = async () => {
       return newResponse;
     }
 
+    if (response.output !== undefined) {
+      const { statusCode } = response.output;
+      if (statusCode === 401) {
+        const error = new AuthenticationError('Missing authentication');
+        const newResponse = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        newResponse.code(error.statusCode);
+        return newResponse;
+      }
+      if (statusCode === 404) {
+        const error = new NotFoundError('Not Found');
+        const newResponse = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        newResponse.code(error.statusCode);
+        return newResponse;
+      }
+    }
+
     if (response instanceof Error) {
       const newResponse = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',
       });
-      response.code(500);
-      console.error(response.statusCode);
+      newResponse.code(500);
+      console.error(response);
       return newResponse;
     }
 
