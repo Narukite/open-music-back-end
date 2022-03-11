@@ -2,6 +2,8 @@ require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
+const Inert = require('@hapi/inert');
+const path = require('path');
 
 const albums = require('./api/albums');
 const AlbumsService = require('./services/postgres/AlbumsService');
@@ -35,14 +37,18 @@ const CollaborationsValidator = require('./validator/collaborations');
 const playlistActivities = require('./api/playlistactivities');
 const PlaylistSongActivitiesService = require('./services/postgres/PlaylistSongActivitiesService');
 
-// eslint-disable-next-line no-underscore-dangle
 const _exports = require('./api/exports');
 const ProducerService = require('./services/rabbitmq/ProducerService');
 const ExportsValidator = require('./validator/exports');
 
+const uploads = require('./api/uploads');
+const StorageService = require('./services/storage/StorageService');
+const UploadsValidator = require('./validator/uploads');
+
 const ClientError = require('./exceptions/ClientError');
 const AuthenticationError = require('./exceptions/AuthenticationError');
 const NotFoundError = require('./exceptions/NotFoundError');
+const RequestEntityTooLargeError = require('./exceptions/RequestEntityTooLargeError');
 
 const init = async () => {
   const usersService = new UsersService();
@@ -53,6 +59,7 @@ const init = async () => {
   const playlistsService = new PlaylistsService(collaborationsService);
   const playlistSongsService = new PlaylistSongsService();
   const activitiesService = new PlaylistSongActivitiesService();
+  const storageService = new StorageService(path.resolve(__dirname, 'api/uploads/file/albums/covers'));
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -64,10 +71,11 @@ const init = async () => {
     },
   });
 
-  await server.register([
-    {
-      plugin: Jwt,
-    },
+  await server.register([{
+    plugin: Jwt,
+  }, {
+    plugin: Inert,
+  },
   ]);
 
   server.auth.strategy('openmusic_jwt', 'jwt', {
@@ -150,6 +158,13 @@ const init = async () => {
       playlistsService,
       validator: ExportsValidator,
     },
+  }, {
+    plugin: uploads,
+    options: {
+      storageService,
+      albumsService,
+      validator: UploadsValidator,
+    },
   },
   ]);
 
@@ -177,6 +192,15 @@ const init = async () => {
       }
       if (statusCode === 404) {
         const error = new NotFoundError('Not Found');
+        const newResponse = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        newResponse.code(error.statusCode);
+        return newResponse;
+      }
+      if (statusCode === 413) {
+        const error = new RequestEntityTooLargeError('Payload content length greater than maximum allowed: 512000');
         const newResponse = h.response({
           status: 'fail',
           message: error.message,

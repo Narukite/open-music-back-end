@@ -17,4 +17,12 @@ const mapSongsDBToSongsModel = ({
   performer,
 });
 
-module.exports = { mapSongDBToSongModel, mapSongsDBToSongsModel };
+const mapAlbumDBToAlbumModel = ({
+  cover_url,
+  ...args
+}) => ({
+  ...args,
+  coverUrl: cover_url,
+});
+
+module.exports = { mapSongDBToSongModel, mapSongsDBToSongsModel, mapAlbumDBToAlbumModel };
