@@ -35,6 +35,11 @@ const CollaborationsValidator = require('./validator/collaborations');
 const playlistActivities = require('./api/playlistactivities');
 const PlaylistSongActivitiesService = require('./services/postgres/PlaylistSongActivitiesService');
 
+// eslint-disable-next-line no-underscore-dangle
+const _exports = require('./api/exports');
+const ProducerService = require('./services/rabbitmq/ProducerService');
+const ExportsValidator = require('./validator/exports');
+
 const ClientError = require('./exceptions/ClientError');
 const AuthenticationError = require('./exceptions/AuthenticationError');
 const NotFoundError = require('./exceptions/NotFoundError');
@@ -137,6 +142,13 @@ const init = async () => {
     options: {
       playlistsService,
       activitiesService,
+    },
+  }, {
+    plugin: _exports,
+    options: {
+      exportsService: ProducerService,
+      playlistsService,
+      validator: ExportsValidator,
     },
   },
   ]);
