@@ -4,8 +4,9 @@ const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
 class UserAlbumLikesService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
   async addLike(userId, albumId) {
@@ -22,18 +23,31 @@ class UserAlbumLikesService {
       throw new InvariantError('Like gagal ditambahkan');
     }
 
+    await this._cacheService.delete(`user_album_like:${albumId}`);
+
     return result.rows[0].id;
   }
 
   async getLikesByAlbumId(albumId) {
-    const query = {
-      text: `SELECT COUNT(id) AS likes
-      FROM user_album_likes
-      WHERE album_id = $1`,
-      values: [albumId],
-    };
-    const result = await this._pool.query(query);
-    return result.rows[0];
+    let dataSource;
+    try {
+      const result = await this._cacheService.get(`user_album_like:${albumId}`);
+      dataSource = 'cache';
+      return { result: JSON.parse(result), dataSource };
+    } catch (error) {
+      const query = {
+        text: `SELECT COUNT(id) AS likes
+        FROM user_album_likes
+        WHERE album_id = $1`,
+        values: [albumId],
+      };
+      const result = await this._pool.query(query);
+
+      await this._cacheService.set(`user_album_like:${albumId}`, JSON.stringify(result.rows[0]));
+
+      dataSource = 'database';
+      return { result: result.rows[0], dataSource };
+    }
   }
 
   async getLikeByUserIdAndAlbumId(userId, albumId) {
@@ -53,7 +67,7 @@ class UserAlbumLikesService {
 
   async deleteLikeById(id) {
     const query = {
-      text: 'DELETE FROM user_album_likes WHERE id = $1 RETURNING id',
+      text: 'DELETE FROM user_album_likes WHERE id = $1 RETURNING album_id',
       values: [id],
     };
 
@@ -62,6 +76,9 @@ class UserAlbumLikesService {
     if (!result.rows.length) {
       throw new NotFoundError('Like gagal dihapus. Id tidak ditemukan');
     }
+
+    const { album_id: albumId } = result.rows[0];
+    await this._cacheService.delete(`user_album_like:${albumId}`);
   }
 }
 

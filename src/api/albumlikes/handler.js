@@ -34,18 +34,21 @@ class AlbumLikesHandler {
     }
   }
 
-  async getAlbumLikesHandler({ params }) {
+  async getAlbumLikesHandler({ params }, h) {
     const { id: albumId } = params;
 
-    const { likes: likesInString } = await this._likesService.getLikesByAlbumId(albumId);
+    const { result: { likes: likesInString }, dataSource } = await this._likesService
+      .getLikesByAlbumId(albumId);
     const likes = parseInt(likesInString, 10);
 
-    return {
+    const response = h.response({
       status: 'success',
       data: {
         likes,
       },
-    };
+    });
+    response.header('X-Data-Source', dataSource);
+    return response;
   }
 }
 
