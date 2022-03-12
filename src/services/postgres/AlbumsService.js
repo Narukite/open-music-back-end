@@ -79,6 +79,19 @@ class AlbumsService {
       throw new NotFoundError('Gagal memperbarui Album. Id tidak ditemukan');
     }
   }
+
+  async verifyExistingAlbum(id) {
+    const query = {
+      text: 'SELECT id FROM albums WHERE id = $1',
+      values: [id],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (result.rows.length === 0) {
+      throw new NotFoundError('Gagal menemukan album.');
+    }
+  }
 }
 
 module.exports = AlbumsService;
