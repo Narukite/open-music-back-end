@@ -28,8 +28,16 @@ class SongsService {
     return rows[0].id;
   }
 
-  async getSongs() {
-    const { rows } = await this._pool.query('SELECT id, title, performer FROM songs');
+  async getSongs(title = '', performer = '') {
+    const titleQuery = `%${title.toUpperCase()}%`;
+    const performerQuery = `%${performer.toUpperCase()}%`;
+    const query = {
+      text: 'SELECT id, title, performer FROM songs WHERE UPPER(title) LIKE $1 AND UPPER(performer) LIKE $2',
+      values: [titleQuery, performerQuery],
+    };
+
+    const { rows } = await this._pool.query(query);
+
     return rows;
   }
 
@@ -37,43 +45,6 @@ class SongsService {
     const query = {
       text: 'SELECT id, title, performer FROM songs WHERE album_id = $1',
       values: [albumId],
-    };
-
-    const { rows } = await this._pool.query(query);
-
-    return rows;
-  }
-
-  async getSongsByTitleQuery(title) {
-    const titleQuery = `%${title.toUpperCase()}%`;
-    const query = {
-      text: 'SELECT id, title, performer FROM songs WHERE UPPER(title) LIKE $1',
-      values: [titleQuery],
-    };
-
-    const { rows } = await this._pool.query(query);
-
-    return rows;
-  }
-
-  async getSongsByPerformerQuery(performer) {
-    const performerQuery = `%${performer.toUpperCase()}%`;
-    const query = {
-      text: 'SELECT id, title, performer FROM songs WHERE UPPER(performer) LIKE $1',
-      values: [performerQuery],
-    };
-
-    const { rows } = await this._pool.query(query);
-
-    return rows;
-  }
-
-  async getSongsByTitleAndPerformerQuery(title, performer) {
-    const titleQuery = `%${title.toUpperCase()}%`;
-    const performerQuery = `%${performer.toUpperCase()}%`;
-    const query = {
-      text: 'SELECT id, title, performer FROM songs WHERE UPPER(title) LIKE $1 AND UPPER(performer) LIKE $2',
-      values: [titleQuery, performerQuery],
     };
 
     const { rows } = await this._pool.query(query);
