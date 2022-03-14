@@ -9,11 +9,10 @@ class PlaylistSongActivitiesService {
 
   async addActivity(playlistId, songId, userId, action) {
     const id = `playlist_song_activity-${nanoid(16)}`;
-    const time = new Date().toISOString();
 
     const query = {
-      text: 'INSERT INTO playlist_song_activities VALUES($1, $2, $3, $4, $5, $6) RETURNING id',
-      values: [id, playlistId, songId, userId, action, time],
+      text: 'INSERT INTO playlist_song_activities VALUES($1, $2, $3, $4, $5) RETURNING id',
+      values: [id, playlistId, songId, userId, action],
     };
 
     const result = await this._pool.query(query);
