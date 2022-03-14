@@ -10,7 +10,7 @@ class PlaylistsService {
     this._collaborationService = collaborationService;
   }
 
-  async addPlaylist({ name, owner }) {
+  async addPlaylist(name, owner) {
     const id = `playlist-${nanoid(16)}`;
 
     const query = {
@@ -18,13 +18,13 @@ class PlaylistsService {
       values: [id, name, owner],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    if (!result.rows[0].id) {
+    if (!rows[0].id) {
       throw new InvariantError('Playlist gagal ditambahkan');
     }
 
-    return result.rows[0].id;
+    return rows[0].id;
   }
 
   async getPlaylists(owner) {
@@ -36,9 +36,9 @@ class PlaylistsService {
       values: [owner],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    return result.rows;
+    return rows;
   }
 
   async getPlaylistById(id) {

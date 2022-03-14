@@ -15,13 +15,13 @@ class PlaylistSongActivitiesService {
       values: [id, playlistId, songId, userId, action],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    if (!result.rows[0].id) {
+    if (!rows[0].id) {
       throw new InvariantError('Activity gagal ditambahkan');
     }
 
-    return result.rows[0].id;
+    return rows[0].id;
   }
 
   async getActivities(playlistId) {
@@ -33,8 +33,8 @@ class PlaylistSongActivitiesService {
       WHERE playlist_song_activities.playlist_id = $1`,
       values: [playlistId],
     };
-    const result = await this._pool.query(query);
-    return result.rows;
+    const { rows } = await this._pool.query(query);
+    return rows;
   }
 }
 

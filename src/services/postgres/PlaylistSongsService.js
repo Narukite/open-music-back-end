@@ -8,7 +8,7 @@ class PlaylistSongsService {
     this._pool = new Pool();
   }
 
-  async addPlaylistSong({ playlistId, songId }) {
+  async addPlaylistSong(playlistId, songId) {
     const id = `playlist_song-${nanoid(16)}`;
 
     const query = {
@@ -16,13 +16,13 @@ class PlaylistSongsService {
       values: [id, playlistId, songId],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    if (!result.rows[0].id) {
+    if (!rows[0].id) {
       throw new InvariantError('PlaylistSong gagal ditambahkan');
     }
 
-    return result.rows[0].id;
+    return rows[0].id;
   }
 
   async getPlaylistSongs(playlistId) {
@@ -33,9 +33,9 @@ class PlaylistSongsService {
       values: [playlistId],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    return result.rows;
+    return rows;
   }
 
   async deletePlaylistSongById(playlistId, songId) {

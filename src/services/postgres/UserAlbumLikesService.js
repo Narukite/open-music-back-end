@@ -17,15 +17,15 @@ class UserAlbumLikesService {
       values: [id, userId, albumId],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    if (!result.rows[0].id) {
+    if (!rows[0].id) {
       throw new InvariantError('Like gagal ditambahkan');
     }
 
     await this._cacheService.delete(`user_album_like:${albumId}`);
 
-    return result.rows[0].id;
+    return rows[0].id;
   }
 
   async getLikesByAlbumId(albumId) {
@@ -41,12 +41,12 @@ class UserAlbumLikesService {
         WHERE album_id = $1`,
         values: [albumId],
       };
-      const result = await this._pool.query(query);
+      const { rows } = await this._pool.query(query);
 
-      await this._cacheService.set(`user_album_like:${albumId}`, JSON.stringify(result.rows[0]));
+      await this._cacheService.set(`user_album_like:${albumId}`, JSON.stringify(rows[0]));
 
       dataSource = 'database';
-      return { result: result.rows[0], dataSource };
+      return { result: rows[0], dataSource };
     }
   }
 
@@ -56,13 +56,13 @@ class UserAlbumLikesService {
       values: [userId, albumId],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    if (result.rowCount === 0) {
+    if (rows.length === 0) {
       throw new NotFoundError('Gagal menemukan like.');
     }
 
-    return result.rows[0];
+    return rows[0];
   }
 
   async deleteLikeById(id) {
@@ -71,13 +71,13 @@ class UserAlbumLikesService {
       values: [id],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    if (!result.rowCount) {
+    if (!rows.length) {
       throw new NotFoundError('Like gagal dihapus. Id tidak ditemukan');
     }
 
-    const { album_id: albumId } = result.rows[0];
+    const { album_id: albumId } = rows[0];
     await this._cacheService.delete(`user_album_like:${albumId}`);
   }
 }

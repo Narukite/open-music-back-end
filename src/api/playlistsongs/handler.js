@@ -20,9 +20,7 @@ class PlaylistSongsHandler {
 
       await this._songsService.verifyExistingSong(songId);
       await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
-      const playlistSongId = await this._playlistSongsService.addPlaylistSong({
-        playlistId, songId,
-      });
+      const playlistSongId = await this._playlistSongsService.addPlaylistSong(playlistId, songId);
       await this._activitiesService.addActivity(playlistId, songId, credentialId, 'add');
 
       const response = h.response({

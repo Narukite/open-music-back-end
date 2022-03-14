@@ -19,18 +19,18 @@ class SongsService {
       values: [id, title, year, performer, genre, duration, albumId],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    if (!result.rows[0].id) {
+    if (!rows[0].id) {
       throw new InvariantError('Song gagal ditambahkan');
     }
 
-    return result.rows[0].id;
+    return rows[0].id;
   }
 
   async getSongs() {
-    const result = await this._pool.query('SELECT id, title, performer FROM songs');
-    return result.rows;
+    const { rows } = await this._pool.query('SELECT id, title, performer FROM songs');
+    return rows;
   }
 
   async getSongsByAlbumId(albumId) {
@@ -39,9 +39,9 @@ class SongsService {
       values: [albumId],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    return result.rows;
+    return rows;
   }
 
   async getSongsByTitleQuery(title) {
@@ -51,9 +51,9 @@ class SongsService {
       values: [titleQuery],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    return result.rows;
+    return rows;
   }
 
   async getSongsByPerformerQuery(performer) {
@@ -63,9 +63,9 @@ class SongsService {
       values: [performerQuery],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    return result.rows;
+    return rows;
   }
 
   async getSongsByTitleAndPerformerQuery(title, performer) {
@@ -76,9 +76,9 @@ class SongsService {
       values: [titleQuery, performerQuery],
     };
 
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    return result.rows;
+    return rows;
   }
 
   async getSongById(id) {
@@ -86,13 +86,13 @@ class SongsService {
       text: 'SELECT * FROM songs WHERE id = $1',
       values: [id],
     };
-    const result = await this._pool.query(query);
+    const { rows } = await this._pool.query(query);
 
-    if (!result.rowCount) {
+    if (!rows.length) {
       throw new NotFoundError('Song tidak ditemukan');
     }
 
-    return result.rows.map(mapSongDBToSongModel)[0];
+    return rows.map(mapSongDBToSongModel)[0];
   }
 
   async editSongById(id, {
