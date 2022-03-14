@@ -58,7 +58,7 @@ class UserAlbumLikesService {
 
     const result = await this._pool.query(query);
 
-    if (result.rows.length === 0) {
+    if (result.rowCount === 0) {
       throw new NotFoundError('Gagal menemukan like.');
     }
 
@@ -73,7 +73,7 @@ class UserAlbumLikesService {
 
     const result = await this._pool.query(query);
 
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Like gagal dihapus. Id tidak ditemukan');
     }
 
